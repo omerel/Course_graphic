@@ -15,16 +15,20 @@ double stars[NUM_STARS];
 double q = 0;
 double offset = 0;
 
-double dx = -0.001;
+// Tank angle
+double beta;
+
+double dx = -0.0003;
 double sx=1,sy=1;
 double teta=1.5;
 
 // fire animation
-double f = 6;
-double g =-8;
-bool isFire = 0;
+double f = 5;		 // force
+double g =-9;		// graviti
+bool isFire = 0;	//if clicked
 double x_shell,y_shell ,x_0 , y_0 , v_x ,v_y ,t=0;
 double shoot_angle;
+double dt = 0.0005;	//delta time
 
 
 //double gamma = 0;
@@ -42,13 +46,12 @@ void init()
 		stars[i] = (rand()%1000)/1000.0;
 	// set background color
 	glClearColor(0.61,0.5,0.9,0);
-
 	glOrtho(-1,1,-1,1,-1,1);
 }
 
 void DrawWheel()
 {
-	double x,y,alpha, offset = PI/15;
+	double x,y,alpha, offset = PI/10;
 	glColor3d(1,1,1);
 
 	// circle
@@ -60,14 +63,13 @@ void DrawWheel()
 		glVertex2d(x,y);
 	}
 	glEnd();
+
 	// lines
-//	teta = PI/20;
 	for(alpha = 0; alpha <=2*PI; alpha+=4*offset)
 	{
-		glBegin(GL_TRIANGLES);
+		glBegin(GL_LINE_STRIP);
 		x = cos(alpha);
 		y = sin(alpha);
-	//	glColor3d(1-fabs(x),fabs(y),1-(fabs(x)+fabs(y))/2);
 		glVertex2d(x,y);
 		glVertex2d(0,0);
 		x = cos(alpha+offset);
@@ -103,32 +105,16 @@ void DrawBackground()
 	glEnd();
 	
 	// random stars
+	glPointSize(1);
 	glColor3d(1,1,0);
 	glBegin(GL_POINTS);
 	for(i=0;i<NUM_STARS;i++)
-	//	glVertex2d((2*i-NUM_STARS)/((double)NUM_STARS),stars[i]);
+		glVertex2d((2*i-NUM_STARS)/((double)NUM_STARS),stars[i]);
 	glEnd();
 
 }
-/*
-void DrawHouse()
-{
-	glBegin(GL_LINE_LOOP);
-		glVertex2d(0.5,0.2);
-		glVertex2d(0.6,0.2);
-		glVertex2d(0.6,0.4);
-		glVertex2d(0.55,0.5);
-		glVertex2d(0.5,0.4);
-	glEnd();
-	glBegin(GL_LINES);
-		glVertex2d(0.5,0.4);
-		glVertex2d(0.6,0.4);
-	glEnd();
 
-}
-*/
-
-void DrawBicycle()
+void DrawTank()
 {
 	// draw base wheels
 	glLineWidth(2);
@@ -227,47 +213,59 @@ void DrawBicycle()
 		glVertex2d(-0.49,0.34);
 		glVertex2d(-0.18,0.24);
 	glEnd();
-
-
-	/*
-	glBegin(GL_LINE_STRIP);
-		glVertex2d(0.12,0.14);
-		glVertex2d(0.13,0.17);
-		glVertex2d(0.06,0.17);
-		glVertex2d(0.16,0.17);
-	glEnd();
-	glBegin(GL_LINE_STRIP);
-		glVertex2d(0.0,0.0);
-		glVertex2d(-0.17,0.11);
-		glVertex2d(-0.2,0.0);
-		glVertex2d(-0.16,0.16);
-		glVertex2d(0.12,0.14);
-	glEnd();
-	glBegin(GL_LINE_STRIP);
-		glVertex2d(-0.16,0.16);
-		glVertex2d(-0.15,0.18);
-		glVertex2d(-0.22,0.18);
-	glEnd();
-	*/
-
 }
 
 //draw shell
-
 void drawShell()
 	
 {	glPushMatrix();	
-		glPointSize(3);
+		glPointSize(5);
 		glColor3d(1,1,1);
 		glBegin(GL_POINTS);
 			glVertex2d(x_shell,y_shell);
 		glEnd();
+		glPointSize(2);
+		// draw flames
+		glColor3d(1,0,0);
+		glBegin(GL_POINTS);
+			glVertex2d(x_shell+0.01,y_shell+0.02);
+			glVertex2d(x_shell+0.01,y_shell);
+			glVertex2d(x_shell+0.03,y_shell);
+			glVertex2d(x_shell+0.01,y_shell-0.02);
+		glEnd();
 	glPopMatrix();
+}
+
+void explode()
+{
+	int x_explode = x_shell;
+	int y_explode = y_shell;
+
+	glBegin(GL_POLYGON);
+		glColor3d(1,0,0.5);
+
+		glVertex2d(x_explode+0.0,y_explode+0.2);
+		glVertex2d(x_explode+0.05,y_explode+0.05);
+
+		glColor3d(1,0,0);
+
+		glVertex2d(x_explode+0.12,y_explode+0.1);
+		glVertex2d(x_explode+0.05,-y_explode+0.05);
+
+		glVertex2d(x_explode+0.05,y_explode-0.16);
+		glVertex2d(x_explode+-0.1,y_explode-0.2);
+
+		glVertex2d(x_explode+-0.04,y_explode-0.02);
+		glVertex2d(x_explode+-0.01,y_explode+0.01);
+
+		glVertex2d(x_explode+-0.2,y_explode+0.14);
+		glVertex2d(x_explode+-0.01,y_explode+0.02);
+	glEnd();
+
 }
 // refresh
 void display()
 {
-	double beta;
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// start of the transformations
@@ -275,51 +273,71 @@ void display()
 	glLoadIdentity();
 
 	DrawBackground();
+
 	glPushMatrix();
 		glTranslated(-0.2,0.25,0);
 	glPopMatrix();
 
-	by = 0.1*sin(bx*6);
-	beta = atan(0.1*6*cos(6*bx));
-
-	glTranslated(bx,by+0.04,0);
-
-	glScaled(0.4,0.4,1);
+		by = 0.1*sin(bx*6);
+		beta = atan(0.1*6*cos(bx*6));
 
 	glPushMatrix();
+		// move to start on edge
+		if (bx < -1)
+			bx = 1;
+		glTranslated(bx,by+0.04,0);
+		
+		glScaled(0.4,0.4,1);
+
 		glRotated(beta*180/PI,0,0,1);
-		DrawBicycle();
+		DrawTank();
+
+		if (isFire)
+		{
+			x_shell = x_0 + v_x*t;
+			y_shell = y_0 + v_y*t + g*t*t; 
+			drawShell();
+		}
 	glPopMatrix();
 
-	if (isFire == 1)
-	{
-		t+=0.005;
-		x_shell = x_0 + v_x*t;
-		y_shell = y_0 + v_y*t + g*t*t;
-		drawShell();
-	}
+		// explode when hit the land
+		if ( y_shell == by )
+		{
+			isFire = 0;
+			glTranslated(-0.35,-0.04,0);
+			explode();
+		}
+
 	glutSwapBuffers();
 }
 
 void fire()
 {
-	isFire = 1;
-	x_0 = -0.5;
-	y_0 = 0.55;
-	shoot_angle =45*180/PI;// atan(0.1*6*cos(6*x_shell))*180/PI;
-	v_x = f*cos(shoot_angle);
-	v_y = f*sin(shoot_angle);
+	double delta;
+	isFire = !isFire;
+	if (isFire == 1)
+	{
+		t=0;
+		isFire = -1*isFire;
+		x_0 = -0.5;
+		y_0 = 0.35;
+		delta =  y_0/-x_0;
+		shoot_angle = 1-( beta + delta);
+		v_x = -f*cos(shoot_angle);
+		v_y = f*sin(shoot_angle);
+	}
+	else
+	{
+		t = 0;
+	}
 }
 
 void idle()
 {
-	offset+=teta;
-	//gamma+=1.5;
 	bx+=dx;
+	if (isFire == 1){t+= dt;}
 	glutPostRedisplay(); //-> display
 }
-
-
 
 void mouse(int button, int state, int x, int y)
 {
@@ -338,7 +356,7 @@ void main( int argc, char* argv[])
 	glutInitWindowSize(WIDTH,HEIGHT);
 	glutInitWindowPosition(100,100);
 
-	glutCreateWindow("First example");
+	glutCreateWindow("Tank Fire");
 	// set refresh function
 	glutDisplayFunc(display);
 	glutIdleFunc(idle);
