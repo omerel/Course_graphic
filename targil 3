@@ -2,6 +2,7 @@
 #include "GLUT.H"
 #include <math.h>
 #include <time.h>
+#include <stdio.h>
 
 #define HEIGHT 600
 #define WIDTH 800
@@ -19,11 +20,11 @@ double offset = 0;
 double beta;
 
 double dx = -0.0003;
-double sx=1,sy=1;
-double teta=1.5;
+//double sx=1,sy=1;
+//double teta=1.5;
 
 // fire animation
-double f = 5;		 // force
+double f = -4;		 // force
 double g =-9;		// graviti
 bool isFire = 0;	//if clicked
 double x_shell,y_shell ,x_0 , y_0 , v_x ,v_y ,t=0;
@@ -238,30 +239,33 @@ void drawShell()
 
 void explode()
 {
-	int x_explode = x_shell;
-	int y_explode = y_shell;
+	double ratio = 0.1;
+	double red =1;
 
-	glBegin(GL_POLYGON);
-		glColor3d(1,0,0.5);
-
-		glVertex2d(x_explode+0.0,y_explode+0.2);
-		glVertex2d(x_explode+0.05,y_explode+0.05);
-
-		glColor3d(1,0,0);
-
-		glVertex2d(x_explode+0.12,y_explode+0.1);
-		glVertex2d(x_explode+0.05,-y_explode+0.05);
-
-		glVertex2d(x_explode+0.05,y_explode-0.16);
-		glVertex2d(x_explode+-0.1,y_explode-0.2);
-
-		glVertex2d(x_explode+-0.04,y_explode-0.02);
-		glVertex2d(x_explode+-0.01,y_explode+0.01);
-
-		glVertex2d(x_explode+-0.2,y_explode+0.14);
-		glVertex2d(x_explode+-0.01,y_explode+0.02);
-	glEnd();
-
+	for (int i = 0; i< 3; i++)
+	{
+		glPushMatrix();
+			glBegin(GL_POLYGON);
+				glColor3d(red,0,0);
+				glVertex2d(x_shell,y_shell+ratio/2);
+				glVertex2d(x_shell+ratio,y_shell+ratio);
+				glVertex2d(x_shell+ratio/2,y_shell+ratio/2);
+				glVertex2d(x_shell+ratio,y_shell);
+				glColor3d(red,0.5,0);
+				glVertex2d(x_shell+ratio/2,y_shell+ratio/2);
+				glVertex2d(x_shell+ratio,y_shell-ratio);
+				glVertex2d(x_shell+ratio/2,-y_shell+ratio/2);
+				glVertex2d(x_shell-ratio,y_shell-ratio);
+				glColor3d(red,0.7,0);
+				glVertex2d(x_shell+ratio/2,y_shell);
+				glVertex2d(x_shell-ratio,y_shell+ratio);
+			glEnd();
+		glPopMatrix();
+		ratio -= 0.005;
+		red -= 0.05;
+	}
+	ratio = 0.1;
+	red = 1;
 }
 // refresh
 void display()
@@ -286,45 +290,44 @@ void display()
 		if (bx < -1)
 			bx = 1;
 		glTranslated(bx,by+0.04,0);
-		
 		glScaled(0.4,0.4,1);
-
 		glRotated(beta*180/PI,0,0,1);
 		DrawTank();
-
-		if (isFire)
-		{
-			x_shell = x_0 + v_x*t;
-			y_shell = y_0 + v_y*t + g*t*t; 
-			drawShell();
-		}
 	glPopMatrix();
 
-		// explode when hit the land
-		if ( y_shell == by )
-		{
-			isFire = 0;
-			glTranslated(-0.35,-0.04,0);
-			explode();
-		}
-
+	if (isFire)
+	{
+		x_shell = x_0 + v_x*t;
+		y_shell = y_0 + v_y*t + g*t*t; 
+		drawShell();
+	}
+	
+	// explode when hit the land
+	if ( y_shell < 0.1*sin(x_shell*6) )
+	{
+		isFire = 0;
+		explode();
+	}
 	glutSwapBuffers();
 }
 
 void fire()
 {
+	//beta*180/PI
 	double delta;
+	double r;
+	r = sqrt(0.21*0.21 + 0.18*0.18);
+	delta =  atan(0.21/0.18);
 	isFire = !isFire;
 	if (isFire == 1)
 	{
 		t=0;
 		isFire = -1*isFire;
-		x_0 = -0.5;
-		y_0 = 0.35;
-		delta =  y_0/-x_0;
-		shoot_angle = 1-( beta + delta);
-		v_x = -f*cos(shoot_angle);
-		v_y = f*sin(shoot_angle);
+			x_0 = bx - r*sin(delta+beta);
+			y_0 = by + r*cos(delta+beta);
+		shoot_angle = 340*PI/180;
+		v_x = f*cos(shoot_angle + beta);
+		v_y = f*sin(shoot_angle +beta );
 	}
 	else
 	{
