@@ -1,0 +1,498 @@
+// All what you need to the Body
+
+// add to project properties->configuration ->linker->input
+//->additional dependences-> opengl32.lib;glu32.lib;glut.lib;
+
+#include "GLUT.H"
+#include <math.h>
+#include <time.h>
+
+#define HEIGHT 600
+#define WIDTH 600
+
+// (1) PUT  CONST HERE
+
+// (2) PUT define HERE 
+
+// (3) PUT GLOBAL varibles HERE 
+
+void init()
+{
+	// optional for random
+	srand(time(0));
+
+	// set background color
+	glClearColor(0.61,0.5,0.9,0);
+
+	// (4) PUT CONTENT HERE
+
+	glOrtho(-1,1,-1,1,-1,1);
+}
+
+// (5) PUT NEW METHODS HERE
+
+// refresh
+void display()
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	// start of the transformations - ONLY IF USING MATRIX PUSH AND POP
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	// (6) PUT CONTENT HERE
+
+	glutSwapBuffers();
+}
+
+void idle() // WRITE OFFSETS IN THIS METHOD
+{
+	// (7) PUT CONTENT HERE
+
+	glutPostRedisplay(); //-> display
+}
+
+
+void main( int argc, char* argv[])
+{
+	// windowing
+	glutInit(&argc,argv);
+	// GLUT_DOUBLE stands for double buffer
+	glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE);
+	glutInitWindowSize(WIDTH,HEIGHT);
+	glutInitWindowPosition(100,100);
+
+	glutCreateWindow("excercise name");
+	// set refresh function
+	glutDisplayFunc(display);
+	glutIdleFunc(idle);
+
+	// (8) CALL TO NEW METHOD HERE (LIKE MOUSE AND KEYBOARD)
+
+	init();
+
+	glutMainLoop();
+}
+///////////////////////////////////////////////////////////////////////////
+//								EXAMPLES								 //
+///////////////////////////////////////////////////////////////////////////
+
+
+// Create Background with stars 
+
+// (2) PUT define  
+#define NUM_STARS 200
+
+// (3) PUT GLOBAL varibles 
+double stars[NUM_STARS];
+double offset = 0;
+
+// (4) PUT CONTENT in init
+int i;
+for(i=0;i<NUM_STARS;i++)
+		stars[i] = (rand()%1000)/1000.0; 
+
+// (5) PUT NEW METHODS 
+void DrawBackground()
+{
+	int i;
+	// set gradient background
+	glBegin(GL_POLYGON);
+		glColor3d(0,0,0.5); // dark blue
+		glVertex2d(-1,1);
+		glVertex2d(1,1);
+		glColor3d(0,1,1); // cyan
+		glVertex2d(1,-1);
+		glVertex2d(-1,-1);
+	glEnd();
+	// random stars
+	glColor3d(1,1,0);
+	glBegin(GL_POINTS);
+	for(i=0;i<NUM_STARS;i++)
+		glVertex2d((2*i-NUM_STARS)/((double)NUM_STARS),stars[i]);
+	glEnd();
+}
+
+// (6) PUT CONTENT in display
+DrawBackground();
+
+// (7) PUT CONTENT in idle
+offset+=0.01;
+
+///////////////////////////////////////////////////////////////////////////
+
+// Create moving sin
+ 
+// (3) PUT GLOBAL varibles 
+double offset=0;
+
+// (6) PUT CONTENT in display
+// draw function
+glBegin(GL_LINE_STRIP);
+for(x=-1;x<=1;x+=0.001)
+{
+	y = sin(5*x)*sin(20*x-offset) + 0.05*sin(150*x+offset);
+	glColor3d(fabs(y),1-fabs(y),fabs(x));
+	glVertex2d(x,y);
+}
+glEnd();
+
+// (7) PUT CONTENT in idle
+offset-=0.1;
+
+///////////////////////////////////////////////////////////////////////////
+
+// draw lines
+
+// (2) PUT define  
+typedef struct point2d 
+{
+	int x;
+	int y;
+} POINT2D;
+
+// (3) PUT GLOBAL varibles 
+POINT2D first_point;
+bool first_click = true;
+
+unsigned char pix[HEIGHT][WIDTH][3]; // r,g,b
+
+double offset=0;
+int px = 0;
+
+// (4) PUT CONTENT in init 
+// colored background - optional
+int i,j;
+	double vratio=HEIGHT/255.0 ,hratio=WIDTH/255.0;
+	for(i=0;i<HEIGHT;i++)
+		for(j=0;j<WIDTH;j++)
+		{
+			pix[i][j][0] = i/vratio; // red
+			pix[i][j][1] = (HEIGHT-i)/vratio; // green
+			pix[i][j][2] = j/hratio; // blue
+		}
+// (5) PUT NEW METHODS 
+void DrawLine(POINT2D first,POINT2D second)
+{
+	double x,y;
+	double a,b;
+	POINT2D tmp;
+
+	a =( (double)second.y - first.y)/( second.x - first.x);
+	if(fabs(a)<1)
+	{
+//	b = first.y - a*first.x;
+
+	if(first.x>second.x) 
+	{
+		tmp = first;
+		first = second;
+		second = tmp;
+	}
+	for(x=first.x,y=first.y;x<=second.x;x++)
+	{
+		pix[(int)y][(int)x][0] = 0;
+		pix[(int)y][(int)x][1] = 0;
+		pix[(int)y][(int)x][2] = 0;
+		y += a; // because y gets addition of a*1
+	}
+	}
+	else // a>1
+	{
+		a = 1/a;
+//		b = first.x - a*first.y;
+	if(first.y>second.y) 
+	{
+		tmp = first;
+		first = second;
+		second = tmp;
+	}
+	for(y = first.y,x=first.x;y<=second.y;y++)
+	{
+		pix[(int)y][(int)x][0] = 0;
+		pix[(int)y][(int)x][1] = 0;
+		pix[(int)y][(int)x][2] = 0;
+		x+=a;
+	}
+	}
+}
+
+void mouse(int button,int state, int x , int y)
+{
+	if(button==GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+	{
+		if(first_click) // save the point
+		{
+			first_point.x = x;
+			first_point.y = HEIGHT-y;
+		}
+		else
+		{
+			POINT2D second_point;
+			second_point.x = x;
+			second_point.y = HEIGHT-y;
+			DrawLine(first_point,second_point);
+		}
+		first_click = !first_click;
+	}
+}
+
+// (6) PUT CONTENT in display
+glDrawPixels(WIDTH,HEIGHT,GL_RGB,GL_UNSIGNED_BYTE,pix);
+
+// (8) PUT CONTENT in main
+glutMouseFunc(mouse);
+
+///////////////////////////////////////////////////////////////////////////
+
+// Create moving wheel
+
+const double PI = 4*atan(1.0);
+// (2) PUT define  
+
+// (3) PUT GLOBAL varibles 
+double offset = 0;
+
+// (5) PUT NEW METHODS 
+void DrawWheel()
+{
+	double x,y,alpha, teta = PI/50;
+	glColor3d(1,1,1);
+
+	// circle
+	glBegin(GL_LINE_LOOP);
+	for(alpha = 0; alpha <=2*PI; alpha+=teta)
+	{
+		x = cos(alpha);
+		y = sin(alpha);
+		glVertex2d(x,y);
+	}
+	glEnd();
+	// lines
+//	teta = PI/20;
+	for(alpha = 0; alpha <=2*PI; alpha+=4*teta)
+	{
+	glBegin(GL_TRIANGLES);
+		x = cos(alpha);
+		y = sin(alpha);
+		glColor3d(1-fabs(x),fabs(y),1-(fabs(x)+fabs(y))/2);
+		glVertex2d(x,y);
+		glVertex2d(0,0);
+		x = cos(alpha+teta);
+		y = sin(alpha+teta);
+		glVertex2d(x,y);
+	glEnd();
+	}
+}
+// (6) PUT CONTENT in display
+// example of 5 wheels:
+	// offset in degrees
+glPushMatrix();
+	glRotated(offset,0,0,1);
+	glScaled(0.5,0.5,1);
+	// first - center
+	DrawWheel();
+glPopMatrix();
+	//second
+
+glPushMatrix();
+	glRotated(-2*offset,0,0,1);
+	glTranslated(0,0.75,0);
+	glScaled(0.25,0.25,1);
+	DrawWheel();
+glPopMatrix();
+// third
+glPushMatrix();
+	glTranslated(-0.75,0,0);
+	glRotated(-2*offset,0,0,1);
+	glScaled(0.25,0.25,1);
+	DrawWheel();
+glPopMatrix();
+// fourth
+glPushMatrix();
+	glTranslated(0,-0.75,0);
+	glRotated(-2*offset,0,0,1);
+	glScaled(0.25,0.25,1);
+	DrawWheel();
+glPopMatrix();
+// fifth
+glPushMatrix();
+	glTranslated(0.75,0,0);
+	glRotated(-2*offset,0,0,1);
+	glScaled(0.25,0.25,1);
+	DrawWheel();
+glPopMatrix();
+
+// (7) PUT CONTENT in idle
+offset+=0.3
+
+///////////////////////////////////////////////////////////////////////////
+
+// Create bicycle over sin
+
+// (1) PUT  CONST 
+const double PI = 4*atan(1.0);
+
+// (3) PUT GLOBAL varibles 
+double offset = 0;
+double dx = -0.001;
+double sx=1,sy=1;
+double teta=1.5;
+double gamma = 0;
+double bx=0.5,by; // x of bicycle
+
+// (4) PUT CONTENT in init 
+
+// (5) PUT NEW METHODS 
+void DrawWheel(){} // look above
+void DrawBackground()
+{
+	double x,y;
+	// Draw graph
+	glColor3d(0.0,0.0,0.0);
+	glBegin(GL_LINE_STRIP);
+	for(x = -1;x<=1;x+=0.01)
+	{
+		y= 0.1*sin(x*6);
+		glVertex2d(x,y);
+	}
+	glEnd();
+
+}
+void DrawBicycle()
+{
+	glLineWidth(2);
+	glPushMatrix();
+		glTranslated(-0.2,0,0);
+		glRotated(offset,0,0,1);
+		glScaled(0.1,0.1,1);
+		DrawWheel();
+	glPopMatrix();
+	glPushMatrix();
+		glTranslated(0.2,0,0);
+		glRotated(offset,0,0,1);
+		glScaled(0.1,0.1,1);
+		DrawWheel();
+	glPopMatrix();
+	glPushMatrix();
+		glRotated(offset,0,0,1);
+		glScaled(0.03,0.03,1);
+		DrawWheel();
+	glPopMatrix();
+	// Rama
+	glColor3d(1,0.7,0.2); // orange
+	glBegin(GL_LINE_LOOP);
+		glVertex2d(0,0);
+		glVertex2d(0.2,0);
+		glVertex2d(0.12,0.14);
+	glEnd();
+	glBegin(GL_LINE_STRIP);
+		glVertex2d(0.12,0.14);
+		glVertex2d(0.13,0.17);
+		glVertex2d(0.06,0.17);
+		glVertex2d(0.16,0.17);
+	glEnd();
+	glBegin(GL_LINE_STRIP);
+		glVertex2d(0.0,0.0);
+		glVertex2d(-0.17,0.11);
+		glVertex2d(-0.2,0.0);
+		glVertex2d(-0.16,0.16);
+		glVertex2d(0.12,0.14);
+	glEnd();
+	glBegin(GL_LINE_STRIP);
+		glVertex2d(-0.16,0.16);
+		glVertex2d(-0.15,0.18);
+		glVertex2d(-0.22,0.18);
+	glEnd();
+}
+
+//extra: windMill
+void DrawHouse()
+{
+	glBegin(GL_LINE_LOOP);
+		glVertex2d(0.5,0.2);
+		glVertex2d(0.6,0.2);
+		glVertex2d(0.6,0.4);
+		glVertex2d(0.55,0.5);
+		glVertex2d(0.5,0.4);
+	glEnd();
+	glBegin(GL_LINES);
+		glVertex2d(0.5,0.4);
+		glVertex2d(0.6,0.4);
+	glEnd();
+
+}
+
+void DrawWindMill()
+{
+
+	glColor3d(0,1,0);
+	glPushMatrix();
+		glTranslated(0.55,0.5,0);	// return back to its place
+//		glScaled(sx,sy,1);
+		glRotated(gamma,0,0,1);
+		glTranslated(-0.55,-0.5,0); // move house center to origin
+		DrawHouse();
+	glPopMatrix();
+	glPushMatrix();
+		glTranslated(0.55,0.5,0);	// return back to its place
+//		glScaled(sx,sy,1);
+		glRotated(gamma+90,0,0,1);
+		glTranslated(-0.55,-0.5,0); // move house center to origin
+		DrawHouse();
+	glPopMatrix();
+	glPushMatrix();
+		glTranslated(0.55,0.5,0);	// return back to its place
+//		glScaled(sx,sy,1);
+		glRotated(gamma+180,0,0,1);
+		glTranslated(-0.55,-0.5,0); // move house center to origin
+		DrawHouse();
+	glPopMatrix();
+	glPushMatrix();
+		glTranslated(0.55,0.5,0);	// return back to its place
+//		glScaled(sx,sy,1);
+		glRotated(gamma-90,0,0,1);
+		glTranslated(-0.55,-0.5,0); // move house center to origin
+		DrawHouse();
+	glPopMatrix();
+
+	glColor3d(1,1,1); // constant
+	glPushMatrix();
+		glTranslated(0.55,0.5,0); // move house roof   to origin
+		glScaled(2,2,1);
+		glTranslated(-0.55,-0.5,0); // move house roof  to origin
+		DrawHouse();
+	glPopMatrix();
+}
+
+void mouse(int button, int state, int x, int y)
+{
+	if(button==GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+	{
+		dx = -dx;
+		teta = -teta;
+	}
+}
+
+// (6) PUT CONTENT in display
+DrawBackground();
+	glPushMatrix();
+		glTranslated(-0.2,0.25,0);
+		DrawWindMill();
+	glPopMatrix();
+
+	by = 0.1*sin(bx*6);
+	beta = atan(0.1*6*cos(6*bx));
+	glTranslated(bx,by+0.04,0);
+	glScaled(0.4,0.4,1);
+	glRotated(beta*180/PI,0,0,1);
+	DrawBicycle();
+
+// (7) PUT CONTENT in idle
+	offset+=teta;
+	gamma+=1.5;
+	bx+=dx;
+
+// (8) PUT CONTENT in main
+	glutMouseFunc(mouse);
+
