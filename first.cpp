@@ -10,6 +10,14 @@ const double PI = 4 * atan(1.0);
 
 const int GSIZE = 150;
 
+// Declarations
+// Struct
+struct Point {
+	double x;
+	double y;
+	double z; };
+
+
 double ground[GSIZE][GSIZE];
 
 double eyex = 2, eyez = 35, eyey = 30;
@@ -21,27 +29,69 @@ double phasa = 0;
 bool stop = false;
 double offset;
 
-
 // Airplane
 double airdirx, airdirz;
 double airsight = 3 * PI / 2, airangular_speed = 0, airspeed = 0;
 double ax = 0, ay = 0, az = 0;
-
-
 // controller position
 int hook_control_top = HEIGHT - 60, hook_control_bottom = HEIGHT - 40, hook_control = HEIGHT - 50;
 int rotate_control_left =40, rotate_control_right =60, rotate_control = 50;
 int move_control_left = 40, move_control_right = 60, move_control =50;
 
+// calculated from the edges of the string 
+int maxMoveHookUp = 0;
+int minMoveHookDown = -10;
+int stringLength = (minMoveHookDown + maxMoveHookUp)/2; 
+
+// calculated from the edges of the crane 
+int maxMovePlatform = 10;
+int minMovePlarform = 2;
+
+//hook position
+Point hook;
+
+//double hookX = 0 , hookY = 0, hookZ = 0;
 void UpdateTerrain2();
 void Smooth();
+
+const int NUM_OF_BOXES = 9;
+Point boxes[NUM_OF_BOXES];
+
+bool boxIntersects(Point box, double x, double y, double z)
+{
+	if (box.x + 1 >= x && box.x-1 <= x &&
+		box.y + 1 >= y && box.y-1 <= box.y &&
+		box.z + 1 >= z && box.z-1 <= box.z )
+		return(true);
+	else
+		return(false);
+}
+
+int hookIntersects()
+{
+	for (int i = 0; i < NUM_OF_BOXES; i++)
+	{
+		if (boxIntersects(boxes[i], hook.x, hook.y, hook.z))
+			return (i);
+	}
+	return (-1);
+}
+
+Point updatePoint(double x, double y, double z)
+{
+	Point newPoint;
+	newPoint.x = x;
+	newPoint.y = y;
+	newPoint.z = z;
+	return (newPoint);
+}
 
 // add to project properties->configuration ->linker->input
 //->additional dependences-> opengl32.lib;glu32.lib;glut.lib;
 void init()
 {
 	int i, j;
-
+	
 	srand(time(0)); // set random values
 
 	for (i = 0; i<GSIZE; i++)
@@ -52,6 +102,8 @@ void init()
 	for (i = 0; i<1700; i++)
 		UpdateTerrain2();
 
+	hook = updatePoint(4, 12 + (stringLength -2), (minMovePlarform+maxMovePlatform)/2);
+
 	Smooth();
 	Smooth();
 	Smooth();
@@ -60,7 +112,6 @@ void init()
 	glClearColor(0.61, 0.5, 0.9, 0);
 	glEnable(GL_DEPTH_TEST);
 }
-
 void SetColor(double h)
 {
 	double g;
@@ -72,7 +123,6 @@ void SetColor(double h)
 	else // snow
 		glColor3d(0.7*g, 0.7*g, 0.8*g);
 }
-
 void DrawGround()
 {
 	int i, j;
@@ -260,7 +310,6 @@ void DrawCube()
 	glVertex3d(1, -1, 1);
 	glEnd();
 }
-
 void DrawCraneCube()
 {
 	double alpha;
@@ -304,7 +353,6 @@ void DrawCraneCube()
 	glVertex3f(1.0f, -1.0f, -1.0f);
 	glEnd();  // End of drawing color-cube
 }
-
 void DrawCranePiece()
 {
 	// top
@@ -370,7 +418,6 @@ void DrawCranePiece()
 	glVertex3d(1, -1, -1);
 	glEnd();
 }
-
 void DrawCranePyramid()
 {
 	glColor3d(0, 0, 0); // Black
@@ -414,7 +461,6 @@ void DrawCylinder(int n)
 		glEnd();
 	}
 }
-
 void DrawCylinder1(int n, double topr, double bottomr)
 {
 	double alpha;
@@ -432,7 +478,6 @@ void DrawCylinder1(int n, double topr, double bottomr)
 		glEnd();
 	}
 }
-
 void DrawSphere(int n, int l)
 {
 	double beta;
@@ -449,7 +494,6 @@ void DrawSphere(int n, int l)
 		glPopMatrix();
 	}
 }
-
 // sphere from start layer to stop layer
 void DrawSphere1(int n, int l, int start, int stop)
 {
@@ -467,7 +511,6 @@ void DrawSphere1(int n, int l, int start, int stop)
 		glPopMatrix();
 	}
 }
-
 void DrawAirplain()
 {
 	glPushMatrix();
@@ -522,53 +565,92 @@ void DrawAirplain()
 
 void DrawBoxes()
 {
+
 	glPushMatrix();
 	glColor3d(0.0, 1.0, 0.0);     // Green
 	glTranslated(0, 1, 0);
 	DrawCraneCube();
 	glPopMatrix();
+	boxes[0].x = 0;
+	boxes[0].y = 1;
+	boxes[0].z = 0;
+
 	glPushMatrix();
 	glColor3d(1.0, 0.5, 0.0);     // Orange
 	glTranslated(0, 1, 2);
 	DrawCraneCube();
 	glPopMatrix();
+	boxes[1].x = 0;
+	boxes[1].y = 1;
+	boxes[1].z = 2;
+
 	glPushMatrix();
 	glColor3d(1.0, 0.0, 0.0);     // Red
 	glTranslated(2, 1, 0);
 	DrawCraneCube();
 	glPopMatrix();
+	boxes[2].x = 2;
+	boxes[2].y = 1;
+	boxes[2].z = 0;
+
 	glPushMatrix();
 	glColor3d(1.0, 1.0, 0.0);     // Yellow
 	glTranslated(0, 1, 4);
 	DrawCraneCube();
 	glPopMatrix();
+	boxes[3].x = 0;
+	boxes[3].y = 1;
+	boxes[3].z = 4;
+
+
 	glPushMatrix();
 	glColor3d(0.0, 0.0, 1.0);     // Blue
 	glTranslated(0, 1, 6);
 	DrawCraneCube();
 	glPopMatrix();
+
+	boxes[4].x = 0;
+	boxes[4].y = 1;
+	boxes[4].z = 6;
+
 	glPushMatrix();
 	glColor3d(1.0, 0.0, 1.0);     // Magenta
 	glTranslated(0, 1, 8);
 	DrawCraneCube();
 	glPopMatrix();
+
+	boxes[5].x = 0;
+	boxes[5].y = 1;
+	boxes[5].z = 8;
+
+
 	glPushMatrix();
 	glColor3d(1, 1, 1);				// White
 	glTranslated(0, 3, 0);
 	DrawCraneCube();
 	glPopMatrix();
+	boxes[6].x = 0;
+	boxes[6].y = 3;
+	boxes[6].z = 0;
+
 	glPushMatrix();
 	glColor3d(0, 1, 1);				// Cyan
 	glTranslated(0, 3, 2);
 	DrawCraneCube();
 	glPopMatrix();
+	boxes[7].x = 0;
+	boxes[7].y = 3;
+	boxes[7].z = 2;
+
 	glPushMatrix();
 	glColor3d(0, 0, 0);				// Black
 	glTranslated(0, 3, 4);
 	DrawCraneCube();
 	glPopMatrix();
+	boxes[8].x = 0;
+	boxes[8].y = 3;
+	boxes[8].z = 4;
 }
-
 void DrawCraneLadder()
 {
 	glPushMatrix();
@@ -590,11 +672,9 @@ void DrawCraneLadder()
 	DrawCranePyramid();
 	glPopMatrix();
 }
-
-void DrawCrane()
+void DrawCraneHookPlatform()
 {
-	// Base
-	glColor3d(0.1, 0.1, 0.1);
+	glColor3d(1, 0, 0);
 	glBegin(GL_POLYGON);
 	glVertex3d(-1, 0, 1);
 	glVertex3d(1, 0, 1);
@@ -602,6 +682,40 @@ void DrawCrane()
 	glVertex3d(-1, 0, -1);
 	glEnd();
 
+}
+void DrawHook()
+{
+
+	stringLength = (minMoveHookDown + maxMoveHookUp)/2 +(hook_control-HEIGHT+50)*(minMoveHookDown + maxMoveHookUp)/80; 
+	glLineWidth(2);
+	glColor3d(0, 0, 1);
+	glBegin(GL_LINE_STRIP);
+	glVertex3d(0, 0, 0);
+	glVertex3d( 0 , stringLength  , 0);
+	glVertex3d( 0 , stringLength - 0.25 , 0);
+	glVertex3d( 0 , stringLength - 0.5 , -0.25);
+	glVertex3d( 0 , stringLength - 1 , 0);
+	glVertex3d( 0 , stringLength - 0.5 , 0.25);
+	glEnd();
+	glLineWidth(1);
+}
+void DrawCrane()
+{
+	//draw base
+	glPushMatrix();
+	glTranslated(4, 1, 0);
+	glColor3d(0.5, 0.5, 0.5);
+	DrawCraneCube();
+	glPopMatrix();
+
+	// Draw Crane Hook Platform
+	glPushMatrix();
+	// 80 is the range of the controll
+	glTranslated(4,11,((50 -  move_control)*(minMovePlarform-maxMovePlatform)/80 + (minMovePlarform+maxMovePlatform)/2) );
+	DrawHook();
+	DrawCraneHookPlatform();
+	glPopMatrix();
+	 
 	// Vertical Ladder
 	DrawCraneLadder();
 
@@ -611,10 +725,8 @@ void DrawCrane()
 	glRotated(90, 1, 0, 0);
 	DrawCraneLadder();
 	glPopMatrix();
-	glColor3d(0.5, 0.5, 0.5);
-	DrawCraneCube();
+	
 }
-
 void ShowAll()
 {
 	//double pitch = hook_control - 510 - 40; // Range of hook_control is [-40, 40]
@@ -630,10 +742,18 @@ void ShowAll()
 
 	glPushMatrix();
 		glTranslated(4, 1, 0);
-		glRotated((rotate_control)*180/PI, 0, 1, 0);
+		glRotated((rotate_control-50)*360/80, 0, 1, 0);
 		glTranslated(-4, -1, 0);
 		DrawCrane();
 	glPopMatrix();
+
+
+	glColor3d(1,0,0);
+	glPointSize(5);
+	glBegin(GL_POINTS);
+		glVertex3d(hook.x,hook.y,hook.z);
+	glEnd();
+
 	/*
 	glPushMatrix();
 
@@ -653,8 +773,6 @@ void ShowAll()
 	glPopMatrix();
 	*/
 }
-
-
 void controlCraneRotate()
 {
 	glViewport(100, 0, 100, 100);
@@ -804,7 +922,6 @@ void display()
 
 	glutSwapBuffers();
 }
-
 void displayTop()
 {
 	int i;
@@ -821,7 +938,6 @@ void displayTop()
 
 	glutSwapBuffers();
 }
-
 void displayCombined()
 {
 	int i;
@@ -853,7 +969,6 @@ void displayCombined()
 
 	glutSwapBuffers();
 }
-
 void idle()
 {
 	double pitch = (hook_control - 510 - 40) * PI / 180;
@@ -884,8 +999,6 @@ void idle()
 
 	glutPostRedisplay(); //-> display
 }
-
-
 void mouse(int button, int state, int x, int y)
 {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
@@ -895,7 +1008,6 @@ void mouse(int button, int state, int x, int y)
 	else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
 		Smooth();
 }
-
 void keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
@@ -922,7 +1034,6 @@ void keyboard(unsigned char key, int x, int y)
 
 	}
 }
-
 void special(int key, int x, int y)
 {
 	switch (key)
@@ -948,7 +1059,6 @@ void special(int key, int x, int y)
 	}
 
 }
-
 void menu(int option)
 {
 	switch (option)
@@ -969,7 +1079,6 @@ void menu(int option)
 		break;
 	}
 }
-
 void mouse_motion(int x, int y)
 {
 	if (x>40+200 && x<60+200 && y>hook_control_top && y<hook_control_bottom && y < HEIGHT - 10 && y > HEIGHT - 90)
@@ -991,7 +1100,6 @@ void mouse_motion(int x, int y)
 		move_control_right = move_control + 10;
 	}
 }
-
 void main(int argc, char* argv[])
 {
 	// windowing
