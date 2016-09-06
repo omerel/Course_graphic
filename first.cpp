@@ -523,10 +523,15 @@ void DrawCrane()
 }
 void ShowAll()
 {
-	int hookRotateAngle = 0;
-	int hookDiffX;
-	int hookDiffZ;
+	
 	double rotate = ((rotate_control - 50) * 360 / 80);
+	//int c = sqrt(hookInitialStartX*hookInitialStartX + hookInitialStartZ*hookInitialStartZ);
+	int delta = hookInitialStartY-(12 + (stringLength - 2));
+	//update rotate
+	//hook = updatePoint(c*sin(rotate*PI/180), hookInitialStartY, c*cos(rotate*PI / 180));
+	//update hook hieght
+	hook = updatePoint(hookInitialStartX,hookInitialStartY,hookInitialStartZ);
+	hook = updatePoint(hook.x,hookInitialStartY-delta,hook.y);
 
 	glEnable(GL_DEPTH_TEST);
 	// start of the transformations
@@ -540,20 +545,14 @@ void ShowAll()
 	glPushMatrix();
 	glTranslated(4, 1, 0);
 	glRotated(rotate, 0, 1, 0);
-	if (hookRotateAngle != rotate)
-	{
-		hookRotateAngle = rotate;
-		hook = updatePoint(hookInitialStartX*sin(rotate*PI/180), hook.y, hookInitialStartZ*cos(rotate*PI / 180));
-	}
 	glTranslated(-4, -1, 0);
 	DrawCrane();
 	glPopMatrix();
-
-
+	
 	glColor3d(1, 0, 0);
 	glPointSize(5);
 	glBegin(GL_POINTS);
-	glVertex3d(hook.x, hook.y, hook.z);
+	glVertex3d(hook.x, hook.y, hook.z); //add to x +4
 	glEnd();
 
 	/*
