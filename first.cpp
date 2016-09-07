@@ -51,7 +51,8 @@ double hookInitialStartX;
 double hookInitialStartY;
 double hookInitialStartZ;
 
-
+// controller for hook
+boolean hold = false;
 
 void Smooth();
 
@@ -97,7 +98,7 @@ void init()
 		for (j = 0; j<GSIZE; j++)
 			ground[i][j] = 0;
 
-	hook = updatePoint(0,(stringLength - 2), 0);//(minMovePlarform + maxMovePlatform) / 2);
+	hook = updatePoint(0, (stringLength - 2), 0);//(minMovePlarform + maxMovePlatform) / 2);
 	hookInitialStartX = hook.x;
 	hookInitialStartY = hook.y;
 	hookInitialStartZ = hook.z;
@@ -518,7 +519,7 @@ void DrawCrane()
 	DrawCraneHookPlatform();
 	glPopMatrix();
 
-	
+
 
 	// Vertical Ladder
 	DrawCraneLadder();
@@ -537,9 +538,9 @@ void ShowAll()
 	double rotate = ((rotate_control - 50) * 360 / 80);
 	double c = sqrt(hookInitialStartX*hookInitialStartX + hookInitialStartZ*hookInitialStartZ);
 	int delta = hookInitialStartY - ((stringLength - 2));
-	
+
 	//update rotate
-	hook = updatePoint(c*sin(rotate*PI/180), hookInitialStartY - delta, c*cos(rotate*PI / 180));
+	hook = updatePoint(c*sin(rotate*PI / 180), hookInitialStartY - delta, c*cos(rotate*PI / 180));
 
 	glEnable(GL_DEPTH_TEST);
 	// start of the transformations
@@ -557,10 +558,17 @@ void ShowAll()
 	DrawCrane();
 	glPopMatrix();
 
+
+	// pick box when press hold
+	if (hold)
+		if (hookIntersects() != -1)
+			boxes[hookIntersects()] = updatePoint(hook.x, hook.y, hook.z);
+
+	// draw red point
 	glColor3d(1, 0, 0);
 	glPointSize(5);
 	glBegin(GL_POINTS);
-	glVertex3d(hook.x+4, hook.y +12 , hook.z);
+	glVertex3d(hook.x + 4, hook.y + 12, hook.z);
 	glEnd();
 
 }
@@ -753,7 +761,9 @@ void keyboard(unsigned char key, int x, int y)
 		dy = 0;
 		dx = 0;
 		break;
-
+	case 'h':
+		hold = !hold;
+		break;
 	}
 }
 void special(int key, int x, int y)
