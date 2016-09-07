@@ -51,9 +51,6 @@ double hookInitialStartX;
 double hookInitialStartY;
 double hookInitialStartZ;
 
-// platformPosition
-double hookPlatformPostionX;
-double hookPlatformPostionZ;
 
 
 void Smooth();
@@ -100,10 +97,10 @@ void init()
 		for (j = 0; j<GSIZE; j++)
 			ground[i][j] = 0;
 
-	hook = updatePoint(4, 12 + (stringLength - 2), (minMovePlarform + maxMovePlatform) / 2);
-	hookPlatformPostionX = hookInitialStartX = hook.x;
+	hook = updatePoint(0,(stringLength - 2), 0);//(minMovePlarform + maxMovePlatform) / 2);
+	hookInitialStartX = hook.x;
 	hookInitialStartY = hook.y;
-	hookPlatformPostionZ = hookInitialStartZ = hook.z;
+	hookInitialStartZ = hook.z;
 	// set background color
 	glClearColor(0.61, 0.5, 0.9, 0);
 	glEnable(GL_DEPTH_TEST);
@@ -509,9 +506,9 @@ void DrawCrane()
 	glPopMatrix();
 
 	// TODO
-	//update hook's point
-	hookPlatformPostionX = hookInitialStartX*((platformPosition)/((minMovePlarform + maxMovePlatform) / 2));
-	hookPlatformPostionZ = hookInitialStartZ*((platformPosition) / ((minMovePlarform + maxMovePlatform) / 2));
+
+	//hookInitialStartX = platformPosition;
+	hookInitialStartZ = platformPosition;
 
 	// Draw Crane Hook Platform
 	glPushMatrix();
@@ -536,15 +533,13 @@ void DrawCrane()
 }
 void ShowAll()
 {
-
+	//double radious = 
 	double rotate = ((rotate_control - 50) * 360 / 80);
-	int c = sqrt(hookPlatformPostionX*hookPlatformPostionX + hookPlatformPostionZ*hookPlatformPostionZ);
-	int delta = hookInitialStartY - (12 + (stringLength - 2));
+	double c = sqrt(hookInitialStartX*hookInitialStartX + hookInitialStartZ*hookInitialStartZ);
+	int delta = hookInitialStartY - ((stringLength - 2));
+	
 	//update rotate
-	hook = updatePoint(c*sin(rotate*PI/180), hookInitialStartY, c*cos(rotate*PI / 180));
-	//update hook hieght
-	//hook = updatePoint(hookInitialStartX, hookInitialStartY, hookInitialStartZ);
-	hook = updatePoint(hook.x, hookInitialStartY - delta, hook.z);
+	hook = updatePoint(c*sin(rotate*PI/180), hookInitialStartY - delta, c*cos(rotate*PI / 180));
 
 	glEnable(GL_DEPTH_TEST);
 	// start of the transformations
@@ -565,27 +560,9 @@ void ShowAll()
 	glColor3d(1, 0, 0);
 	glPointSize(5);
 	glBegin(GL_POINTS);
-	glVertex3d(hook.x+4, hook.y, hook.z-1); //add to x +4
+	glVertex3d(hook.x+4, hook.y +12 , hook.z);
 	glEnd();
 
-	/*
-	glPushMatrix();
-
-	// Move
-	glTranslated(ax, ay, az);
-
-	// yaw
-	glRotated((airsight) * 180 / PI + 90, 0, 1, 0);
-	glScaled(0.2, 0.15, 0.2);
-
-	glTranslated(0, 150, 0);
-	// Pitch
-	glRotated(pitch, 0, 0, 1);
-	glTranslated(0, -150, 0);
-
-	//DrawAirplain();
-	glPopMatrix();
-	*/
 }
 void controlCraneRotate()
 {
