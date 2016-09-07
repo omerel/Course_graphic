@@ -51,6 +51,11 @@ double hookInitialStartX;
 double hookInitialStartY;
 double hookInitialStartZ;
 
+// platformPosition
+double hookPlatformPostionX;
+double hookPlatformPostionZ;
+
+
 void Smooth();
 
 const int NUM_OF_BOXES = 9;
@@ -96,9 +101,9 @@ void init()
 			ground[i][j] = 0;
 
 	hook = updatePoint(4, 12 + (stringLength - 2), (minMovePlarform + maxMovePlatform) / 2);
-	hookInitialStartX = hook.x;
+	hookPlatformPostionX = hookInitialStartX = hook.x;
 	hookInitialStartY = hook.y;
-	hookInitialStartZ = hook.z;
+	hookPlatformPostionZ = hookInitialStartZ = hook.z;
 	// set background color
 	glClearColor(0.61, 0.5, 0.9, 0);
 	glEnable(GL_DEPTH_TEST);
@@ -495,6 +500,7 @@ void DrawHook()
 }
 void DrawCrane()
 {
+	int platformPosition = ((50 - move_control)*(minMovePlarform - maxMovePlatform) / 80 + (minMovePlarform + maxMovePlatform) / 2);
 	//draw base
 	glPushMatrix();
 	glTranslated(4, 1, 0);
@@ -502,13 +508,20 @@ void DrawCrane()
 	DrawCraneCube();
 	glPopMatrix();
 
+	// TODO
+	//update hook's point
+	hookPlatformPostionX = hookInitialStartX*((platformPosition)/((minMovePlarform + maxMovePlatform) / 2));
+	hookPlatformPostionZ = hookInitialStartZ*((platformPosition) / ((minMovePlarform + maxMovePlatform) / 2));
+
 	// Draw Crane Hook Platform
 	glPushMatrix();
 	// 80 is the range of the controll
-	glTranslated(4, 11, ((50 - move_control)*(minMovePlarform - maxMovePlatform) / 80 + (minMovePlarform + maxMovePlatform) / 2));
+	glTranslated(4, 11, platformPosition);
 	DrawHook();
 	DrawCraneHookPlatform();
 	glPopMatrix();
+
+	
 
 	// Vertical Ladder
 	DrawCraneLadder();
@@ -523,19 +536,19 @@ void DrawCrane()
 }
 void ShowAll()
 {
-	
+
 	double rotate = ((rotate_control - 50) * 360 / 80);
-	//int c = sqrt(hookInitialStartX*hookInitialStartX + hookInitialStartZ*hookInitialStartZ);
-	int delta = hookInitialStartY-(12 + (stringLength - 2));
+	int c = sqrt(hookPlatformPostionX*hookPlatformPostionX + hookPlatformPostionZ*hookPlatformPostionZ);
+	int delta = hookInitialStartY - (12 + (stringLength - 2));
 	//update rotate
-	//hook = updatePoint(c*sin(rotate*PI/180), hookInitialStartY, c*cos(rotate*PI / 180));
+	hook = updatePoint(c*sin(rotate*PI/180), hookInitialStartY, c*cos(rotate*PI / 180));
 	//update hook hieght
-	hook = updatePoint(hookInitialStartX,hookInitialStartY,hookInitialStartZ);
-	hook = updatePoint(hook.x,hookInitialStartY-delta,hook.y);
+	//hook = updatePoint(hookInitialStartX, hookInitialStartY, hookInitialStartZ);
+	hook = updatePoint(hook.x, hookInitialStartY - delta, hook.z);
 
 	glEnable(GL_DEPTH_TEST);
 	// start of the transformations
-	glMatrixMode(GL_MODELVIEW); 
+	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
 	//DrawGround();
@@ -548,11 +561,11 @@ void ShowAll()
 	glTranslated(-4, -1, 0);
 	DrawCrane();
 	glPopMatrix();
-	
+
 	glColor3d(1, 0, 0);
 	glPointSize(5);
 	glBegin(GL_POINTS);
-	glVertex3d(hook.x, hook.y, hook.z); //add to x +4
+	glVertex3d(hook.x+4, hook.y, hook.z-1); //add to x +4
 	glEnd();
 
 	/*
@@ -708,7 +721,7 @@ void display()
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	glFrustum(-1, 1, -1, 1, 0.7, 300 );
+	glFrustum(-1, 1, -1, 1, 0.7, 300);
 	gluLookAt(eyex, eyey, eyez,
 		eyex + dirx, eyey - 0.5, eyez + dirz,
 		0, 1, 0);
@@ -800,10 +813,10 @@ void menu(int option)
 		//		glutDisplayFunc(displayCockpit);
 		break;
 	case 3:
-		
+
 		break;
 	case 4:
-		
+
 		break;
 	default:
 		break;
