@@ -51,8 +51,28 @@ double hookInitialStartX;
 double hookInitialStartY;
 double hookInitialStartZ;
 
+// box in focus
+int BoxInfocus = -1;
 // controller for hook
 boolean hold = false;
+boolean realese = false;
+
+//falling speed
+double fallSpeed = 0.01;
+int boxFalling = -1;
+
+// boxes data : color and position
+int dataLength = 6;
+double boxesData[] = {
+		0.0, 1.0, 0.0,0, 1, 0,
+		1.0, 0.5, 0.0,0, 1, 2,
+		1.0, 0.0, 0.0,2, 1, 0,
+		1.0, 1.0, 0.0,0, 1, 4,
+		0.0, 0.0, 1.0,0 ,1 ,6,
+		1.0, 0.0, 1.0,0, 1, 8,
+		1, 1, 1,0, 3, 0,
+		0, 1, 1,0, 3, 2,
+		0, 0, 0,0, 3, 4};
 
 void Smooth();
 
@@ -62,8 +82,8 @@ Point boxes[NUM_OF_BOXES];
 bool boxIntersects(Point box, double x, double y, double z)
 {
 	if (box.x + 1 >= x && box.x - 1 <= x &&
-		box.y + 1 >= y && box.y - 1 <= box.y &&
-		box.z + 1 >= z && box.z - 1 <= box.z)
+		box.y + 1 >= y && box.y - 1 <= y &&
+		box.z + 1 >= z && box.z - 1 <= z)
 		return(true);
 	else
 		return(false);
@@ -72,10 +92,27 @@ int hookIntersects()
 {
 	for (int i = 0; i < NUM_OF_BOXES; i++)
 	{
-		if (boxIntersects(boxes[i], hook.x, hook.y, hook.z))
+		if (boxIntersects(boxes[i], hook.x+4, hook.y+12, hook.z))
 			return (i);
 	}
 	return (-1);
+}
+
+boolean BoxIntersects()
+{
+	for (int i = 0; i < NUM_OF_BOXES; i++)
+	{
+		if ( i != boxFalling )
+		{
+			//if (boxes[i].y + 1  <= boxes[boxFalling].y-1)
+			
+			if (boxes[i].x + 1 >= boxes[boxFalling].x && boxes[i].x - 1 <= boxes[boxFalling].x &&
+				boxes[i].y + 1  >= boxes[boxFalling].y-1 && boxes[i].y - 1  <= boxes[boxFalling].y+1 &&
+				boxes[i].z + 1 >= boxes[boxFalling].z && boxes[i].z - 1 <= boxes[boxFalling].z)
+			return(true);
+		}	
+	}
+	return false;
 }
 
 Point updatePoint(double x, double y, double z)
@@ -132,14 +169,6 @@ void DrawCraneGround()
 			glVertex3d(j + 1 - GSIZE / 2, 0, i - GSIZE / 2);
 			glEnd();
 		}
-	/*
-	// draw Y axis
-	glColor3d(1,0,0);
-	glBegin(GL_LINES);
-	glVertex3d(0,0,0);
-	glVertex3d(0,4,0);
-	glEnd();
-	*/
 }
 // Low-pass filter
 void Smooth()
@@ -362,91 +391,16 @@ void DrawCranePyramid()
 }
 void DrawBoxes()
 {
-
-	glPushMatrix();
-	glColor3d(0.0, 1.0, 0.0);     // Green
-	glTranslated(0, 1, 0);
-	DrawCraneCube();
-	glPopMatrix();
-	boxes[0].x = 0;
-	boxes[0].y = 1;
-	boxes[0].z = 0;
-
-	glPushMatrix();
-	glColor3d(1.0, 0.5, 0.0);     // Orange
-	glTranslated(0, 1, 2);
-	DrawCraneCube();
-	glPopMatrix();
-	boxes[1].x = 0;
-	boxes[1].y = 1;
-	boxes[1].z = 2;
-
-	glPushMatrix();
-	glColor3d(1.0, 0.0, 0.0);     // Red
-	glTranslated(2, 1, 0);
-	DrawCraneCube();
-	glPopMatrix();
-	boxes[2].x = 2;
-	boxes[2].y = 1;
-	boxes[2].z = 0;
-
-	glPushMatrix();
-	glColor3d(1.0, 1.0, 0.0);     // Yellow
-	glTranslated(0, 1, 4);
-	DrawCraneCube();
-	glPopMatrix();
-	boxes[3].x = 0;
-	boxes[3].y = 1;
-	boxes[3].z = 4;
-
-
-	glPushMatrix();
-	glColor3d(0.0, 0.0, 1.0);     // Blue
-	glTranslated(0, 1, 6);
-	DrawCraneCube();
-	glPopMatrix();
-
-	boxes[4].x = 0;
-	boxes[4].y = 1;
-	boxes[4].z = 6;
-
-	glPushMatrix();
-	glColor3d(1.0, 0.0, 1.0);     // Magenta
-	glTranslated(0, 1, 8);
-	DrawCraneCube();
-	glPopMatrix();
-
-	boxes[5].x = 0;
-	boxes[5].y = 1;
-	boxes[5].z = 8;
-
-
-	glPushMatrix();
-	glColor3d(1, 1, 1);				// White
-	glTranslated(0, 3, 0);
-	DrawCraneCube();
-	glPopMatrix();
-	boxes[6].x = 0;
-	boxes[6].y = 3;
-	boxes[6].z = 0;
-
-	glPushMatrix();
-	glColor3d(0, 1, 1);				// Cyan
-	glTranslated(0, 3, 2);
-	DrawCraneCube();
-	glPopMatrix();
-	boxes[7].x = 0;
-	boxes[7].y = 3;
-	boxes[7].z = 2;
-
-	glPushMatrix();
-	glColor3d(0, 0, 0);				// Black
-	glTranslated(0, 3, 4);
-	DrawCraneCube();
-	glPopMatrix();
-	boxes[8].x = 0;
-	boxes[8].y = 3;
-	boxes[8].z = 4;
+	for (int i =0 ;i<NUM_OF_BOXES;i++)
+		for (int j = 0;j<6;j++)
+		{
+			glPushMatrix();
+				glColor3d(boxesData[i*dataLength],boxesData[i*dataLength+1],boxesData[i*dataLength+2]);			
+				glTranslated(boxesData[i*dataLength+3],boxesData[i*dataLength+4],boxesData[i*dataLength+5]);
+				DrawCraneCube();
+			glPopMatrix();
+			boxes[i] = updatePoint(boxesData[i*dataLength+3],boxesData[i*dataLength+4],boxesData[i*dataLength+5]);
+		}
 }
 void DrawCraneLadder()
 {
@@ -558,14 +512,35 @@ void ShowAll()
 	DrawCrane();
 	glPopMatrix();
 
-
 	// pick box when press hold
 	if (hold)
-		if (hookIntersects() != -1)
-			boxes[hookIntersects()] = updatePoint(hook.x, hook.y, hook.z);
+		if (BoxInfocus != -1)
+		{
+			boxesData[BoxInfocus*dataLength +3] = hook.x+4;
+			boxesData[BoxInfocus*dataLength +4] = hook.y+12;
+			boxesData[BoxInfocus*dataLength +5] = hook.z;
+		}
+		else
+			BoxInfocus = hookIntersects();
 
+	if (realese)
+	{
+		if (BoxInfocus != -1)
+		{
+			boxFalling = BoxInfocus;
+			BoxInfocus = -1;
+		}
+		realese = false;
+	}
+	if(boxFalling != -1)
+	{
+		if (boxesData[boxFalling*dataLength +4] > 1 && !BoxIntersects())
+				boxesData[boxFalling*dataLength +4] -= fallSpeed;
+		else
+			boxFalling = -1;
+	}
 	// draw red point
-	glColor3d(1, 0, 0);
+	glColor3d(0, 0, 1);
 	glPointSize(5);
 	glBegin(GL_POINTS);
 	glVertex3d(hook.x + 4, hook.y + 12, hook.z);
@@ -762,7 +737,11 @@ void keyboard(unsigned char key, int x, int y)
 		dx = 0;
 		break;
 	case 'h':
-		hold = !hold;
+		hold = true;
+		break;
+	case 'r':
+		realese = true; 
+		hold = false;
 		break;
 	}
 }
