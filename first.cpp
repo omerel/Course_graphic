@@ -698,12 +698,8 @@ void display()
 }
 void idle()
 {
-	double pitch = (hook_control - 510 - 40) * PI / 180;
+
 	offset += 0.01;
-	//	if(!stop)
-	//		UpdateTerrain2();
-
-
 
 	sight += angular_speed;
 	dirx = sin(sight);
@@ -714,17 +710,17 @@ void idle()
 	eyez += dirz*speed;
 
 
-
 	glutPostRedisplay(); //-> display
 }
 void mouse(int button, int state, int x, int y)
 {
-	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && y < HEIGHT-100)
+		hold = true;
+	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
 	{
-		stop = !stop;
+		realese = true; 
+		hold = false;
 	}
-	else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
-		Smooth();
 }
 void keyboard(unsigned char key, int x, int y)
 {
@@ -770,24 +766,7 @@ void special(int key, int x, int y)
 	}
 
 }
-void menu(int option)
-{
-	switch (option)
-	{
-		break;
-	case 2:
-		//		glutDisplayFunc(displayCockpit);
-		break;
-	case 3:
 
-		break;
-	case 4:
-
-		break;
-	default:
-		break;
-	}
-}
 void mouse_motion(int x, int y)
 {
 	if (x>40 + 200 && x<60 + 200 && y>hook_control_top && y<hook_control_bottom && y < HEIGHT - 10 && y > HEIGHT - 90)
@@ -828,15 +807,6 @@ void main(int argc, char* argv[])
 	glutSpecialFunc(special);
 
 	glutMotionFunc(mouse_motion);
-
-
-	// menu
-	glutCreateMenu(menu);
-	glutAddMenuEntry("Top View", 1);
-	glutAddMenuEntry("Cockpit View", 2);
-	glutAddMenuEntry("Regular View", 3);
-	glutAddMenuEntry("Combined View", 4);
-	glutAttachMenu(GLUT_RIGHT_BUTTON);
 
 
 	init();
